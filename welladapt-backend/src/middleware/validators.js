@@ -33,4 +33,48 @@ const validateChatMessage = (req, res, next) => {
   next();
 };
 
-module.exports = { validateChatMessage };
+const validateMoodEntry = (req, res, next) => {
+  const { mood, note, sessionId } = req.body;
+
+  // Validate mood score (1-5)
+  if (!mood || typeof mood !== 'number') {
+    return res.status(400).json({
+      success: false,
+      error: { message: 'Mood is required and must be a number' },
+    });
+  }
+
+  if (mood < 1 || mood > 5) {
+    return res.status(400).json({
+      success: false,
+      error: { message: 'Mood must be between 1 and 5' },
+    });
+  }
+
+  // Validate note (optional)
+  if (note && typeof note !== 'string') {
+    return res.status(400).json({
+      success: false,
+      error: { message: 'Note must be a string' },
+    });
+  }
+
+  if (note && note.length > 500) {
+    return res.status(400).json({
+      success: false,
+      error: { message: 'Note too long (max 500 characters)' },
+    });
+  }
+
+  // Validate sessionId
+  if (!sessionId || typeof sessionId !== 'string') {
+    return res.status(400).json({
+      success: false,
+      error: { message: 'Session ID is required' },
+    });
+  }
+
+  next();
+};
+
+module.exports = { validateChatMessage, validateMoodEntry };

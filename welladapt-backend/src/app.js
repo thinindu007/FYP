@@ -11,6 +11,7 @@ const privacyMiddleware = require('./middleware/privacyMiddleware');
 const chatRoutes = require('./routes/chatRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 const resourceRoutes = require('./routes/resourceRoutes');
+const moodRoutes = require('./routes/moodRoutes');
 
 const app = express();
 
@@ -31,8 +32,9 @@ app.use(privacyMiddleware);
 app.use('/api/health', healthRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/resources', resourceRoutes);
+app.use('/api/mood', moodRoutes);
 
-// Error handling (must be last)
+// Error handling
 app.use(errorHandler);
 
 module.exports = app;

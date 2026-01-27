@@ -1,0 +1,42 @@
+.mood-tracker-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #fafafa;
+}
+
+.mood-tracker-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 16px 20px 0;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.mood-tracker-tabs .tab {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  background: transparent;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: #999;
+  transition: all 0.2s;
+}
+
+.mood-tracker-tabs .tab:hover {
+  color: #667eea;
+}
+
+.mood-tracker-tabs .tab.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+}
+
+.mood-tracker-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 0;
+}

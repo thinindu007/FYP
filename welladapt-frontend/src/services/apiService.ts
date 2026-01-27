@@ -39,7 +39,6 @@ export const apiService = {
     } catch (error: any) {
       console.error('Send message failed:', error);
       
-      // Return error in expected format
       if (error.response?.data) {
         throw error.response.data;
       }
@@ -84,6 +83,62 @@ export const apiService = {
       return response.data;
     } catch (error) {
       console.error('Get academic resources failed:', error);
+      throw error;
+    }
+  },
+
+  // ==================== MOOD TRACKING APIs ====================
+
+  // Submit mood entry
+  async submitMoodEntry(moodData: {
+    mood: number;
+    note?: string;
+    sessionId: string;
+    activities?: string[];
+    triggers?: string[];
+  }): Promise<any> {
+    try {
+      const response = await api.post('/mood/entry', moodData);
+      return response.data;
+    } catch (error) {
+      console.error('Submit mood entry failed:', error);
+      throw error;
+    }
+  },
+
+  // Get mood history
+  async getMoodHistory(sessionId: string, limit = 30, offset = 0): Promise<any> {
+    try {
+      const response = await api.get(`/mood/history/${sessionId}`, {
+        params: { limit, offset },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Get mood history failed:', error);
+      throw error;
+    }
+  },
+
+  // Get mood statistics
+  async getMoodStats(sessionId: string, period: '7d' | '30d' | '90d' = '7d'): Promise<any> {
+    try {
+      const response = await api.get(`/mood/stats/${sessionId}`, {
+        params: { period },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Get mood stats failed:', error);
+      throw error;
+    }
+  },
+
+  // Delete mood entry
+  async deleteMoodEntry(entryId: string): Promise<any> {
+    try {
+      const response = await api.delete(`/mood/entry/${entryId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete mood entry failed:', error);
       throw error;
     }
   },
