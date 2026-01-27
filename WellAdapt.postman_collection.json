@@ -1,0 +1,106 @@
+{
+  "info": {
+    "name": "WellAdapt Backend API",
+    "description": "Bilingual Mental Wellness Chatbot API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "health"]
+        }
+      }
+    },
+    {
+      "name": "Send Chat Message (English)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"I am feeling stressed about exams\",\n  \"language\": \"en\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/chat/message",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "chat", "message"]
+        }
+      }
+    },
+    {
+      "name": "Send Chat Message (Code-Mixed)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"මට exams ගැන හරිම stress එකක්\",\n  \"language\": \"mixed\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/chat/message",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "chat", "message"]
+        }
+      }
+    },
+    {
+      "name": "Classify Emotion",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"I feel anxious and cannot sleep\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/chat/classify-emotion",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "chat", "classify-emotion"]
+        }
+      }
+    },
+    {
+      "name": "Get Crisis Resources",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/resources/crisis",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "resources", "crisis"]
+        }
+      }
+    }
+  ]
+}
