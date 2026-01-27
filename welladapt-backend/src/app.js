@@ -12,6 +12,7 @@ const chatRoutes = require('./routes/chatRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 const resourceRoutes = require('./routes/resourceRoutes');
 const moodRoutes = require('./routes/moodRoutes');
+const chatHistoryRoutes = require('./routes/chatHistoryRoutes');
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use('/api/health', healthRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/mood', moodRoutes);
+app.use('/api/chat-history', chatHistoryRoutes);
 
 // Error handling
 app.use(errorHandler);

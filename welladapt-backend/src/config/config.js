@@ -18,4 +18,9 @@ module.exports = {
     emotionThreshold: parseFloat(process.env.EMOTION_THRESHOLD) || 0.75,
     maxResponseTime: parseInt(process.env.MAX_RESPONSE_TIME) || 3000,
   },
+  //database configuration 
+  database: {
+    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/welladapt',
+    name: process.env.DB_NAME || 'welladapt',
+  },
 };

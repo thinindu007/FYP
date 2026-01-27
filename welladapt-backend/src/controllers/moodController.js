@@ -1,8 +1,5 @@
 const config = require('../config/config');
-
-// In-memory storage for mood entries (for prototype)
-// In production, this would be a database
-let moodEntries = [];
+const { MoodEntry } = require('../models');
 
 class MoodController {
   /**
@@ -12,28 +9,42 @@ class MoodController {
     try {
       const { mood, note, sessionId, activities, triggers } = req.body;
 
-      const entry = {
-        id: `mood_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      // Calculate expiration date if retention policy is set
+      let expiresAt = null;
+      if (config.privacy.dataRetentionDays > 0) {
+        expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + config.privacy.dataRetentionDays);
+      }
+
+      // Create mood entry
+      const entry = new MoodEntry({
         sessionId,
         mood,
         note: note || '',
         activities: activities || [],
         triggers: triggers || [],
-        timestamp: new Date().toISOString(),
-      };
+        expiresAt,
+      });
 
-      // Store entry
-      moodEntries.push(entry);
+      await entry.save();
 
       // Privacy-first: Don't log sensitive mood data
       if (config.privacy.enableLogging) {
-        console.log('Mood entry created:', { id: entry.id, mood: entry.mood });
+        console.log('Mood entry created:', { id: entry._id, mood: entry.mood });
       }
 
       res.status(201).json({
         success: true,
         data: {
-          entry,
+          entry: {
+            id: entry._id,
+            sessionId: entry.sessionId,
+            mood: entry.mood,
+            note: entry.note,
+            activities: entry.activities,
+            triggers: entry.triggers,
+            timestamp: entry.createdAt,
+          },
           message: 'Mood entry recorded successfully',
         },
       });
@@ -50,17 +61,30 @@ class MoodController {
       const { sessionId } = req.params;
       const { limit = 30, offset = 0 } = req.query;
 
-      // Filter entries by sessionId
-      const userEntries = moodEntries
-        .filter((entry) => entry.sessionId === sessionId)
-        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-        .slice(parseInt(offset), parseInt(offset) + parseInt(limit));
+      // Find entries, sorted by most recent first
+      const entries = await MoodEntry.find({ sessionId })
+        .sort({ createdAt: -1 })
+        .skip(parseInt(offset))
+        .limit(parseInt(limit))
+        .select('-__v')
+        .lean();
+
+      // Get total count
+      const total = await MoodEntry.countDocuments({ sessionId });
 
       res.status(200).json({
         success: true,
         data: {
-          entries: userEntries,
-          total: moodEntries.filter((e) => e.sessionId === sessionId).length,
+          entries: entries.map((entry) => ({
+            id: entry._id,
+            sessionId: entry.sessionId,
+            mood: entry.mood,
+            note: entry.note,
+            activities: entry.activities,
+            triggers: entry.triggers,
+            timestamp: entry.createdAt,
+          })),
+          total,
           limit: parseInt(limit),
           offset: parseInt(offset),
         },
@@ -76,7 +100,7 @@ class MoodController {
   async getMoodStats(req, res, next) {
     try {
       const { sessionId } = req.params;
-      const { period = '7d' } = req.query; // 7d, 30d, 90d
+      const { period = '7d' } = req.query;
 
       // Calculate date range
       const now = new Date();
@@ -88,14 +112,15 @@ class MoodController {
       const days = periodMap[period] || 7;
       const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
-      // Filter entries
-      const relevantEntries = moodEntries.filter(
-        (entry) =>
-          entry.sessionId === sessionId &&
-          new Date(entry.timestamp) >= startDate
-      );
+      // Find relevant entries
+      const entries = await MoodEntry.find({
+        sessionId,
+        createdAt: { $gte: startDate },
+      })
+        .sort({ createdAt: 1 })
+        .lean();
 
-      if (relevantEntries.length === 0) {
+      if (entries.length === 0) {
         return res.status(200).json({
           success: true,
           data: {
@@ -103,7 +128,7 @@ class MoodController {
               average: 0,
               trend: 'neutral',
               totalEntries: 0,
-              distribution: {},
+              distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
             },
             message: 'No mood entries found for this period',
           },
@@ -111,10 +136,10 @@ class MoodController {
       }
 
       // Calculate statistics
-      const moods = relevantEntries.map((e) => e.mood);
+      const moods = entries.map((e) => e.mood);
       const average = moods.reduce((sum, m) => sum + m, 0) / moods.length;
 
-      // Calculate trend (compare first half vs second half)
+      // Calculate trend
       const midpoint = Math.floor(moods.length / 2);
       const firstHalf = moods.slice(0, midpoint);
       const secondHalf = moods.slice(midpoint);
@@ -136,18 +161,17 @@ class MoodController {
         5: moods.filter((m) => m === 5).length,
       };
 
-      // Common triggers and activities
-      const allTriggers = relevantEntries.flatMap((e) => e.triggers || []);
-      const allActivities = relevantEntries.flatMap((e) => e.activities || []);
-
+      // Common triggers and activities using aggregation
       const triggerCounts = {};
-      allTriggers.forEach((t) => {
-        triggerCounts[t] = (triggerCounts[t] || 0) + 1;
-      });
-
       const activityCounts = {};
-      allActivities.forEach((a) => {
-        activityCounts[a] = (activityCounts[a] || 0) + 1;
+
+      entries.forEach((entry) => {
+        entry.triggers?.forEach((trigger) => {
+          triggerCounts[trigger] = (triggerCounts[trigger] || 0) + 1;
+        });
+        entry.activities?.forEach((activity) => {
+          activityCounts[activity] = (activityCounts[activity] || 0) + 1;
+        });
       });
 
       const topTriggers = Object.entries(triggerCounts)
@@ -168,11 +192,22 @@ class MoodController {
             average: parseFloat(average.toFixed(2)),
             trend,
             trendValue: parseFloat(difference.toFixed(2)),
-            totalEntries: relevantEntries.length,
+            totalEntries: entries.length,
             distribution,
             topTriggers,
             topActivities,
-            recentEntries: relevantEntries.slice(0, 7),
+            recentEntries: entries
+              .slice(-7)
+              .reverse()
+              .map((entry) => ({
+                id: entry._id,
+                sessionId: entry.sessionId,
+                mood: entry.mood,
+                note: entry.note,
+                activities: entry.activities,
+                triggers: entry.triggers,
+                timestamp: entry.createdAt,
+              })),
           },
         },
       });
@@ -188,21 +223,38 @@ class MoodController {
     try {
       const { entryId } = req.params;
 
-      const index = moodEntries.findIndex((entry) => entry.id === entryId);
+      const result = await MoodEntry.findByIdAndDelete(entryId);
 
-      if (index === -1) {
+      if (!result) {
         return res.status(404).json({
           success: false,
           error: { message: 'Mood entry not found' },
         });
       }
 
-      moodEntries.splice(index, 1);
-
       res.status(200).json({
         success: true,
         data: {
           message: 'Mood entry deleted successfully',
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Clean expired entries (can be called by cron job)
+   */
+  async cleanExpiredEntries(req, res, next) {
+    try {
+      const deletedCount = await MoodEntry.cleanExpiredEntries();
+
+      res.status(200).json({
+        success: true,
+        data: {
+          message: `Cleaned ${deletedCount} expired entries`,
+          deletedCount,
         },
       });
     } catch (error) {
