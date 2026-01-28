@@ -1,0 +1,33 @@
+# Virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Hugging Face / Transformers cache (VERY IMPORTANT)
+.cache/
+huggingface/
+models/
+*.bin
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor configs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace 
