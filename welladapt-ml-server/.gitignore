@@ -19,7 +19,7 @@ __pycache__/
 # Hugging Face / Transformers cache (VERY IMPORTANT)
 .cache/
 huggingface/
-models/
+
 *.bin
 
 # OS files
