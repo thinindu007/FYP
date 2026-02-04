@@ -1,17 +1,13 @@
 const config = require('../config/config');
 
 class ChatController {
-  /**
-   * Process incoming chat message
-   * This will integrate with your NLP models later
-   */
+
   async processMessage(req, res, next) {
     try {
       const { message, language = 'mixed', sessionId } = req.body;
       const startTime = Date.now();
 
       // TODO: Integrate with your bilingual NLP model
-      // For now, return a mock empathetic response
       const response = await ChatController.generateResponse(message, language);
 
       const processingTime = Date.now() - startTime;
@@ -36,10 +32,6 @@ class ChatController {
     }
   }
 
-  /**
-   * Classify emotion from text
-   * Used for on-device classification validation
-   */
   async classifyEmotion(req, res, next) {
     try {
       const { message } = req.body;
@@ -60,14 +52,11 @@ class ChatController {
     }
   }
 
-  /**
-   * Get response suggestions for hybrid inference
-   */
   async getSuggestions(req, res, next) {
     try {
       const { message, context } = req.body;
 
-      // TODO: Integrate with suggestion model
+      // TODO Integrate with suggestion model
       const suggestions = await ChatController.generateSuggestions(message, context);
 
       res.status(200).json({
@@ -79,10 +68,8 @@ class ChatController {
     }
   }
 
-  // ========== HELPER METHODS (TO BE REPLACED WITH ACTUAL ML MODELS) ==========
-
   static async generateResponse(message, language) {
-    // Mock implementation - replace with actual NLP model
+    // Mock implementation
     const responses = {
       si: [
         'මට ඔබේ හැඟීම් තේරෙනවා. මෙය නිතරම සිදු වන දෙයක්.',
@@ -110,7 +97,7 @@ class ChatController {
   }
 
   static async detectEmotion(message) {
-    // Mock implementation - replace with actual emotion classification
+    // Mock implementation 
     const emotions = [
       { label: 'stress', confidence: 0.82 },
       { label: 'anxiety', confidence: 0.78 },
@@ -122,7 +109,7 @@ class ChatController {
   }
 
   static async generateSuggestions(message, context) {
-    // Mock implementation - replace with actual suggestion model
+    // Mock implementation 
     return [
       'Would you like to talk about what\'s causing this stress?',
       'Can you tell me more about when this started?',

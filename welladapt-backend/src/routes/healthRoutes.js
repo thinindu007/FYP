@@ -12,9 +12,9 @@ router.get('/', (req, res) => {
   });
 });
 
-// Model health check (for future ML integration)
+// Model health check 
 router.get('/model', (req, res) => {
-  // TODO: Check if ML model endpoint is accessible
+  // TODO: 
   res.status(200).json({
     success: true,
     modelStatus: 'not_implemented',

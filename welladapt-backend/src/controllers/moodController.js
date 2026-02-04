@@ -1,13 +1,9 @@
 const config = require('../config/config');
 
-// In-memory storage for mood entries (for prototype)
-// In production, this would be a database
 let moodEntries = [];
 
 class MoodController {
-  /**
-   * Submit a new mood entry
-   */
+ 
   async submitMoodEntry(req, res, next) {
     try {
       const { mood, note, sessionId, activities, triggers } = req.body;
@@ -25,7 +21,7 @@ class MoodController {
       // Store entry
       moodEntries.push(entry);
 
-      // Privacy-first: Don't log sensitive mood data
+      // Privacy-first:
       if (config.privacy.enableLogging) {
         console.log('Mood entry created:', { id: entry.id, mood: entry.mood });
       }
@@ -42,9 +38,7 @@ class MoodController {
     }
   }
 
-  /**
-   * Get mood history for a session
-   */
+  
   async getMoodHistory(req, res, next) {
     try {
       const { sessionId } = req.params;
@@ -114,7 +108,7 @@ class MoodController {
       const moods = relevantEntries.map((e) => e.mood);
       const average = moods.reduce((sum, m) => sum + m, 0) / moods.length;
 
-      // Calculate trend (compare first half vs second half)
+      // Calculate trend 
       const midpoint = Math.floor(moods.length / 2);
       const firstHalf = moods.slice(0, midpoint);
       const secondHalf = moods.slice(midpoint);

@@ -6,7 +6,6 @@ const privacyMiddleware = (req, res, next) => {
   // Remove identifying headers
   res.removeHeader('X-Powered-By');
   
-  // Add timestamp for response time tracking (non-sensitive)
   req.startTime = Date.now();
   
   // Intercept response to add response time header

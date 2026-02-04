@@ -6,10 +6,10 @@ const { validateChatMessage } = require('../middleware/validators');
 // Main chat endpoint
 router.post('/message', validateChatMessage, chatController.processMessage);
 
-// Emotion classification (on-device backup)
+// Emotion classification 
 router.post('/classify-emotion', chatController.classifyEmotion);
 
-// Get suggested responses (for hybrid inference)
+// Get suggested responses 
 router.post('/suggestions', chatController.getSuggestions);
 
 module.exports = router;

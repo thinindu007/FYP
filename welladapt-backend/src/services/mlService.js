@@ -38,14 +38,14 @@ class MLService {
    */
   async detectEmotion(text, language = 'mixed') {
     try {
-      console.log(`🤖 Calling ML server for emotion detection...`);
+      console.log(`Calling ML server for emotion detection...`);
       
       const response = await this.client.post('/ml/detect-emotion', {
         text,
         language,
       });
 
-      console.log(`✅ ML server response in ${response.data.processing_time_ms}ms`);
+      console.log(`ML server response in ${response.data.processing_time_ms}ms`);
       
       return {
         success: true,
@@ -149,10 +149,7 @@ class MLService {
     return emotionResponses[language] || emotionResponses.mixed;
   }
 
-  /**
-   * Fallback emotion detection (simple keyword-based)
-   * Used when ML server is unavailable
-   */
+ 
   fallbackEmotionDetection(text) {
     const lowerText = text.toLowerCase();
     

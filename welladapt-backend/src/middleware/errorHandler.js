@@ -3,7 +3,7 @@ const config = require('../config/config');
 const errorHandler = (err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   
-  // Privacy-first: Don't expose detailed errors in production
+  // Privacy-first
   const message = config.server.env === 'development' 
     ? err.message 
     : 'An error occurred';

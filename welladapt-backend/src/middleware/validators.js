@@ -22,7 +22,7 @@ const validateChatMessage = (req, res, next) => {
     });
   }
 
-  // Validate language (if provided)
+  // Validate language 
   if (language && !['si', 'en', 'mixed'].includes(language)) {
     return res.status(400).json({
       success: false,
@@ -36,7 +36,7 @@ const validateChatMessage = (req, res, next) => {
 const validateMoodEntry = (req, res, next) => {
   const { mood, note, sessionId } = req.body;
 
-  // Validate mood score (1-5)
+  // Validate mood score 
   if (!mood || typeof mood !== 'number') {
     return res.status(400).json({
       success: false,
@@ -51,7 +51,7 @@ const validateMoodEntry = (req, res, next) => {
     });
   }
 
-  // Validate note (optional)
+  // Validate note 
   if (note && typeof note !== 'string') {
     return res.status(400).json({
       success: false,
