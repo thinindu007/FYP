@@ -1,6 +1,5 @@
 """
-Emotion Detector using Fine-Tuned XLM-RoBERTa
-Trained specifically on mental health data with code-mixing support
+Emotion Detector
 """
 
 import torch
@@ -11,9 +10,9 @@ import os
 
 class EmotionDetector:
     """
-    Mental health emotion detection using fine-tuned XLM-RoBERTa.
+    fine-tuned XLM-RoBERTa modal.
     
-    This model is specifically trained on:
+    model for:
     - Mental health conversations
     - Bilingual Sinhala-English code-mixed text
     - Academic stress contexts
