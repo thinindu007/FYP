@@ -1,98 +1,78 @@
 """
-Emotion Detector using Multilingual BERT (mBERT)
-Handles Sinhala-English code-mixed text for emotion classification
+Emotion Detector using Fine-Tuned XLM-RoBERTa
+Trained specifically on mental health data with code-mixing support
 """
 
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from typing import Dict, List
-import numpy as np
+import json
+import os
 
 class EmotionDetector:
     """
-    Multilingual emotion detection model.
+    Mental health emotion detection using fine-tuned XLM-RoBERTa.
     
-    Uses mBERT (Multilingual BERT) which supports 104 languages including:
-    - English
-    - Sinhala (partial support)
-    - And handles code-mixed text reasonably well
+    This model is specifically trained on:
+    - Mental health conversations
+    - Bilingual Sinhala-English code-mixed text
+    - Academic stress contexts
     
-    Emotions detected:
-    - stress (exam stress, academic pressure)
-    - anxiety (worry, fear)
-    - sadness (depression, loneliness)
-    - neutral (calm, okay)
-    - happiness (joy, contentment)
+    Emotions: stress, anxiety, depression, neutral, positive
     """
     
-    def __init__(self, model_name: str = "bert-base-multilingual-cased"):
+    def __init__(self, model_path: str = "training/models/final_model"):
         """
-        Initialize the emotion detector.
+        Initialize the emotion detector with fine-tuned model.
         
         Args:
-            model_name: Hugging Face model identifier
-                       Default: mBERT (supports 104 languages)
+            model_path: Path to fine-tuned model directory
         """
-        print(f"🤖 Loading emotion detection model: {model_name}")
+        print(f"Loading fine-tuned emotion detection model...")
         
-        # Load tokenizer (converts text to numbers)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        # Check if fine-tuned model exists
+        if not os.path.exists(model_path):
+            print(f"Fine-tuned model not found at {model_path}")
+            print(f"Using base model instead. Run training first for better results!")
+            model_path = "xlm-roberta-base"
+            self.is_finetuned = False
+        else:
+            print(f"Loading fine-tuned model from {model_path}")
+            self.is_finetuned = True
         
-        # For prototype: Use mBERT and fine-tune it ourselves
-        # In production: You'd load a fine-tuned model
-        self.model_name = model_name
+        # Load tokenizer and model
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
         
-        # We'll use a simple approach for the prototype
-        # Load a pre-trained sentiment model and adapt it
-        try:
-            # Try to load emotion-specific model if available
-            self.model = AutoModelForSequenceClassification.from_pretrained(
-                "j-hartmann/emotion-english-distilroberta-base"
-            )
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                "j-hartmann/emotion-english-distilroberta-base"
-            )
-            print("✅ Loaded emotion-specific model")
-        except:
-            # Fallback to multilingual BERT
-            self.model = AutoModelForSequenceClassification.from_pretrained(
-                model_name,
-                num_labels=5  # 5 emotions
-            )
-            print("✅ Loaded multilingual BERT (will need fine-tuning)")
-        
-        # Set model to evaluation mode
+        # Set to evaluation mode
         self.model.eval()
         
-        # Emotion labels
-        self.emotion_labels = [
-            'stress',      # 0 - Academic stress, exam pressure
-            'anxiety',     # 1 - Worry, nervousness
-            'sadness',     # 2 - Depression, loneliness
-            'neutral',     # 3 - Calm, okay
-            'happiness'    # 4 - Joy, contentment
-        ]
+        # Load metadata if available
+        metadata_path = "training/models/model_metadata.json"
+        if os.path.exists(metadata_path):
+            with open(metadata_path, 'r') as f:
+                self.metadata = json.load(f)
+            print(f" Model F1 Score: {self.metadata['test_metrics']['f1']:.4f}")
         
-        print("✅ Emotion detector ready!")
+        # Emotion labels (from fine-tuning)
+        self.emotion_labels = ['stress', 'anxiety', 'depression', 'neutral', 'positive']
+        
+        print("Emotion detector ready!")
+        print(f"Fine-tuned: {self.is_finetuned}")
     
     def detect_emotion(self, text: str, emoji_context: Dict = None) -> Dict:
         """
         Detect emotion from text with emoji context.
         
-        This handles 'mixed feelings' by considering:
-        1. Text sentiment (from words)
-        2. Emoji sentiment (from emojis)
-        3. Conflict detection (happy words + sad emoji = mixed)
-        
         Args:
-            text: Input text (can be code-mixed)
-            emoji_context: Dictionary with emoji counts from TextProcessor
+            text: Input text (can be code-mixed Sinhala-English)
+            emoji_context: Dictionary with emoji counts
             
         Returns:
-            Dictionary with emotion prediction and confidence
+            Dictionary with emotion prediction and details
         """
         
-        # Step 1: Tokenize text (convert to model input)
+        # Tokenize
         inputs = self.tokenizer(
             text,
             padding=True,
@@ -101,38 +81,35 @@ class EmotionDetector:
             return_tensors="pt"
         )
         
-        # Step 2: Get model prediction
-        with torch.no_grad():  # Don't calculate gradients (faster)
+        # Get prediction
+        with torch.no_grad():
             outputs = self.model(**inputs)
             logits = outputs.logits
         
-        # Step 3: Convert to probabilities
+        # Convert to probabilities
         probabilities = torch.softmax(logits, dim=1)[0]
         probs_dict = {
             label: float(prob) 
             for label, prob in zip(self.emotion_labels, probabilities)
         }
         
-        # Step 4: Get top emotion from text
+        # Get top emotion
         text_emotion_idx = torch.argmax(probabilities).item()
         text_emotion = self.emotion_labels[text_emotion_idx]
         text_confidence = float(probabilities[text_emotion_idx])
         
-        # Step 5: Check for emoji-text conflict (mixed feelings)
+        # Check for emoji-text conflict
         mixed_feeling = False
         emoji_emotion = None
         
         if emoji_context and any(emoji_context.values()):
-            # Get dominant emoji emotion
             emoji_emotion = max(emoji_context, key=emoji_context.get)
             
-            # Check for conflict
-            # Example: Happy words (text: happiness) + Sad emoji = Mixed
+            # Conflict detection
             conflict_pairs = [
-                ('happiness', 'sad'),
-                ('happiness', 'anxious'),
+                ('positive', 'sad'),
+                ('positive', 'anxious'),
                 ('neutral', 'sad'),
-                ('neutral', 'anxious'),
             ]
             
             for text_emo, emoji_emo in conflict_pairs:
@@ -140,7 +117,7 @@ class EmotionDetector:
                     mixed_feeling = True
                     break
         
-        # Step 6: Build response
+        # Build result
         result = {
             'emotion': text_emotion,
             'confidence': round(text_confidence, 3),
@@ -155,7 +132,8 @@ class EmotionDetector:
                 text_confidence, 
                 mixed_feeling, 
                 emoji_emotion
-            )
+            ),
+            'model_version': 'fine-tuned' if self.is_finetuned else 'base'
         }
         
         return result
@@ -167,18 +145,8 @@ class EmotionDetector:
         mixed: bool, 
         emoji_emotion: str
     ) -> str:
-        """
-        Generate human-readable explanation of emotion detection.
+        """Generate explanation of emotion detection"""
         
-        Args:
-            emotion: Detected emotion from text
-            confidence: Confidence score
-            mixed: Whether mixed feeling detected
-            emoji_emotion: Emotion from emojis (if mixed)
-            
-        Returns:
-            Explanation string
-        """
         if mixed:
             return (
                 f"Detected mixed feelings: text suggests '{emotion}' "
@@ -186,23 +154,15 @@ class EmotionDetector:
                 f"This might indicate complex emotions."
             )
         
-        if confidence > 0.7:
+        if confidence > 0.8:
             return f"Strong {emotion} detected with high confidence."
-        elif confidence > 0.5:
+        elif confidence > 0.6:
             return f"Moderate {emotion} detected."
         else:
             return f"Weak {emotion} signal. Emotion is unclear."
     
     def batch_detect(self, texts: List[str]) -> List[Dict]:
-        """
-        Detect emotions for multiple texts at once (more efficient).
-        
-        Args:
-            texts: List of input texts
-            
-        Returns:
-            List of emotion predictions
-        """
+        """Batch emotion detection"""
         results = []
         for text in texts:
             results.append(self.detect_emotion(text))

@@ -87,8 +87,6 @@ export const apiService = {
     }
   },
 
-  // ==================== MOOD TRACKING APIs ====================
-
   // Submit mood entry
   async submitMoodEntry(moodData: {
     mood: number;
