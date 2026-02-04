@@ -24,13 +24,13 @@ const MoodTracker: React.FC<MoodTrackerProps> = ({ sessionId }) => {
           className={`tab ${activeTab === 'checkin' ? 'active' : ''}`}
           onClick={() => setActiveTab('checkin')}
         >
-          📝 Check-in
+           Check-in
         </button>
         <button
           className={`tab ${activeTab === 'history' ? 'active' : ''}`}
           onClick={() => setActiveTab('history')}
         >
-          📊 History
+           History
         </button>
       </div>
 

@@ -63,13 +63,13 @@ function App() {
           className={`nav-button ${activeView === 'chat' ? 'active' : ''}`}
           onClick={() => setActiveView('chat')}
         >
-          💬 Chat
+          Chat
         </button>
         <button
           className={`nav-button ${activeView === 'mood' ? 'active' : ''}`}
           onClick={() => setActiveView('mood')}
         >
-          📊 Mood
+          Mood
         </button>
       </div>
 
