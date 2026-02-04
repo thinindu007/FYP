@@ -14,9 +14,6 @@ class RealisticDatasetBuilder:
         random.seed(42)
     
     def create_realistic_examples(self):
-        """
-        Create realistic examples with MORE VARIATIONS
-        """
         
         examples = []
         
@@ -287,14 +284,14 @@ class RealisticDatasetBuilder:
                     'label': label
                 })
         
-        print(f"✅ Created {len(examples)} realistic examples")
+        print(f" Created {len(examples)} realistic examples")
         return examples
     
     def build(self):
         """Build dataset"""
         
         print("\n" + "="*70)
-        print("🏗️  Building Realistic Mental Health Dataset")
+        print("  Building Realistic Mental Health Dataset")
         print("="*70 + "\n")
         
         # Create examples
@@ -304,7 +301,7 @@ class RealisticDatasetBuilder:
         df = pd.DataFrame(examples)
         
         # Show distribution
-        print("\n📊 Dataset Distribution:")
+        print("\n Dataset Distribution:")
         print(df['label'].value_counts())
         
         # Balance dataset (equal samples per class)
@@ -317,13 +314,13 @@ class RealisticDatasetBuilder:
         df = pd.concat(balanced_dfs, ignore_index=True)
         df = df.sample(frac=1, random_state=42).reset_index(drop=True)
         
-        print(f"\n✅ Balanced to {len(df)} examples ({min_samples} per class)")
+        print(f"\n Balanced to {len(df)} examples ({min_samples} per class)")
         
         # Split
         train_df, temp_df = train_test_split(df, test_size=0.3, random_state=42, stratify=df['label'])
         val_df, test_df = train_test_split(temp_df, test_size=0.5, random_state=42, stratify=temp_df['label'])
         
-        print(f"\n📊 Splits: Train={len(train_df)}, Val={len(val_df)}, Test={len(test_df)}")
+        print(f"\n Splits: Train={len(train_df)}, Val={len(val_df)}, Test={len(test_df)}")
         
         # Save
         import os
@@ -338,7 +335,7 @@ class RealisticDatasetBuilder:
         with open("training/data/label_map.json", 'w') as f:
             json.dump(label_map, f, indent=2)
         
-        print("\n✅ Dataset saved!")
+        print("\n Dataset saved!")
         return train_df, val_df, test_df
 
 if __name__ == "__main__":

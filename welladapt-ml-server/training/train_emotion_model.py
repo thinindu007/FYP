@@ -82,13 +82,13 @@ class EmotionModelTrainer:
         self.num_labels = len(self.label_map)
         self.id2label = {v: k for k, v in self.label_map.items()}
         
-        print(f"📊 Number of labels: {self.num_labels}")
-        print(f"🏷️  Labels: {list(self.label_map.keys())}")
+        print(f" Number of labels: {self.num_labels}")
+        print(f"  Labels: {list(self.label_map.keys())}")
     
     def load_data(self):
         """Load train, validation, and test datasets"""
         
-        print("\n📂 Loading datasets...")
+        print("\n Loading datasets...")
         
         # Load CSV files
         train_df = pd.read_csv(f"{self.data_dir}/train.csv")
@@ -100,9 +100,9 @@ class EmotionModelTrainer:
         val_labels = [self.label_map[label] for label in val_df['label']]
         test_labels = [self.label_map[label] for label in test_df['label']]
         
-        print(f"✅ Train: {len(train_df)} examples")
-        print(f"✅ Validation: {len(val_df)} examples")
-        print(f"✅ Test: {len(test_df)} examples")
+        print(f" Train: {len(train_df)} examples")
+        print(f" Validation: {len(val_df)} examples")
+        print(f" Test: {len(test_df)} examples")
         
         return (
             train_df['text'].tolist(), train_labels,
@@ -113,7 +113,7 @@ class EmotionModelTrainer:
     def prepare_model(self):
         """Load tokenizer and model"""
         
-        print(f"\n🤖 Loading model: {self.model_name}")
+        print(f"\n Loading model: {self.model_name}")
         
         # Load tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
@@ -126,7 +126,7 @@ class EmotionModelTrainer:
             label2id=self.label_map
         )
         
-        print("✅ Model and tokenizer loaded")
+        print(" Model and tokenizer loaded")
         
         return self.tokenizer, self.model
     
@@ -169,7 +169,7 @@ class EmotionModelTrainer:
     def train(self, train_dataset, val_dataset):
         """Train the model"""
         
-        print("\n🏋️  Starting training...")
+        print("\n  Starting training...")
         
         # Training arguments
         training_args = TrainingArguments(
@@ -210,11 +210,11 @@ class EmotionModelTrainer:
         )
         
         # Train
-        print("\n⏰ Training will take 5-15 minutes depending on your hardware...")
+        print("\n Training will take 5-15 minutes depending on your hardware...")
         train_result = trainer.train()
         
         # Save model
-        print("\n💾 Saving final model...")
+        print("\n Saving final model...")
         trainer.save_model(f"{self.output_dir}/final_model")
         self.tokenizer.save_pretrained(f"{self.output_dir}/final_model")
         
@@ -223,14 +223,14 @@ class EmotionModelTrainer:
         trainer.log_metrics("train", metrics)
         trainer.save_metrics("train", metrics)
         
-        print("✅ Training complete!")
+        print(" Training complete!")
         
         return trainer
     
     def evaluate(self, trainer, test_texts, test_labels):
         """Evaluate on test set"""
         
-        print("\n📊 Evaluating on test set...")
+        print("\n Evaluating on test set...")
         
         # Create test dataset
         test_dataset = MentalHealthDataset(
@@ -242,7 +242,7 @@ class EmotionModelTrainer:
         # Evaluate
         metrics = trainer.evaluate(test_dataset)
         
-        print("\n📈 Test Results:")
+        print("\n Test Results:")
         print(f"   Accuracy: {metrics['eval_accuracy']:.4f}")
         print(f"   F1 Score: {metrics['eval_f1']:.4f}")
         print(f"   Precision: {metrics['eval_precision']:.4f}")
@@ -278,7 +278,7 @@ class EmotionModelTrainer:
         
         # Save
         plt.savefig(f"{self.output_dir}/confusion_matrix.png", dpi=300)
-        print(f"\n✅ Confusion matrix saved to: {self.output_dir}/confusion_matrix.png")
+        print(f"\n Confusion matrix saved to: {self.output_dir}/confusion_matrix.png")
         
         plt.close()
     
@@ -286,7 +286,7 @@ class EmotionModelTrainer:
         """Complete training pipeline"""
         
         print("\n" + "="*70)
-        print("🎓 Fine-Tuning XLM-RoBERTa for Mental Health Emotion Detection")
+        print(" Fine-Tuning XLM-RoBERTa for Mental Health Emotion Detection")
         print("="*70)
         
         # Step 1: Load data
@@ -296,7 +296,7 @@ class EmotionModelTrainer:
         tokenizer, model = self.prepare_model()
         
         # Step 3: Create datasets
-        print("\n📦 Creating PyTorch datasets...")
+        print("\n Creating PyTorch datasets...")
         train_dataset, val_dataset = self.create_datasets(
             train_texts, train_labels,
             val_texts, val_labels
@@ -326,8 +326,8 @@ class EmotionModelTrainer:
             json.dump(metadata, f, indent=2)
         
         print("\n" + "="*70)
-        print("✅ Training Pipeline Complete!")
-        print(f"📁 Model saved to: {self.output_dir}/final_model")
+        print(" Training Pipeline Complete!")
+        print(f" Model saved to: {self.output_dir}/final_model")
         print("="*70 + "\n")
         
         return trainer, metrics
@@ -342,5 +342,5 @@ if __name__ == "__main__":
     # Run training
     trainer, metrics = trainer_obj.run_full_training()
     
-    print("\n🎉 Fine-tuning complete! Your model is ready to use.")
-    print("\n💡 Next step: Update app/models/emotion_detector.py to use this model")
+    print("\n Fine-tuning complete! Your model is ready to use.")
+    print("\n Next step: Update app/models/emotion_detector.py to use this model")

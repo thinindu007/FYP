@@ -9,7 +9,7 @@ from sklearn.metrics import classification_report
 import json
 
 def evaluate_model(model_path, test_data_path, label_map_path):
-    """Evaluate model on test set"""
+    """Evaluate model on test """
     
     # Load model
     tokenizer = AutoTokenizer.from_pretrained(model_path)

@@ -40,21 +40,6 @@ class BatchEmotionRequest(BaseModel):
 
 @router.post("/detect-emotion", response_model=EmotionResponse)
 async def detect_emotion(request: EmotionRequest):
-    """
-    Detect emotion from text with code-mixing support.
-    
-    This endpoint handles:
-    - English text: "I am stressed about exams"
-    - Sinhala text: "මට පරීක්ෂණ ගැන කනස්සල්ලක් තියෙනවා"
-    - Code-mixed: "මට exams ගැන stress එකක්"
-    - Mixed feelings: "Great day 😢" (happy words + sad emoji)
-    
-    Args:
-        request: EmotionRequest with text and language
-        
-    Returns:
-        EmotionResponse with detected emotion and confidence
-    """
     start_time = time.time()
     
     try:
@@ -92,16 +77,6 @@ async def detect_emotion(request: EmotionRequest):
 
 @router.post("/batch-detect-emotion")
 async def batch_detect_emotion(request: BatchEmotionRequest):
-    """
-    Detect emotions for multiple texts at once.
-    More efficient than calling /detect-emotion multiple times.
-    
-    Args:
-        request: BatchEmotionRequest with list of texts
-        
-    Returns:
-        List of emotion predictions
-    """
     start_time = time.time()
     
     try:

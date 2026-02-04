@@ -1,6 +1,6 @@
 """
-Mental Health Dataset Preparation - Enhanced Version
-Uses public datasets + synthetic data for better training
+Mental Health Dataset Preparation 
+Uses public datasets + synthetic data 
 """
 
 import pandas as pd
@@ -24,9 +24,6 @@ class MentalHealthDatasetBuilder:
         os.makedirs(f"{output_dir}/splits", exist_ok=True)
     
     def create_large_synthetic_dataset(self) -> List[Dict]:
-        """
-        Create a MUCH larger synthetic dataset (500+ examples)
-        """
         
         dataset = []
         
@@ -225,7 +222,7 @@ class MentalHealthDatasetBuilder:
                 except:
                     continue
         
-        print(f"✅ Created {len(dataset)} synthetic examples")
+        print(f" Created {len(dataset)} synthetic examples")
         return dataset
     
     def augment_with_emojis(self, dataset: List[Dict]) -> List[Dict]:
@@ -252,7 +249,7 @@ class MentalHealthDatasetBuilder:
                         'label': label
                     })
         
-        print(f"✅ Augmented with emojis: {len(dataset)} → {len(augmented)}")
+        print(f" Augmented with emojis: {len(dataset)} → {len(augmented)}")
         return augmented
     
     def create_balanced_dataset(self, dataset: List[Dict]) -> pd.DataFrame:
@@ -260,7 +257,7 @@ class MentalHealthDatasetBuilder:
         
         df = pd.DataFrame(dataset)
         
-        print("\n📊 Dataset Distribution BEFORE balancing:")
+        print("\n Dataset Distribution BEFORE balancing:")
         print(df['label'].value_counts())
         
         # Balance
@@ -274,8 +271,8 @@ class MentalHealthDatasetBuilder:
         balanced_df = pd.concat(balanced_dfs, ignore_index=True)
         balanced_df = balanced_df.sample(frac=1, random_state=42).reset_index(drop=True)
         
-        print(f"\n✅ Balanced Dataset: {len(balanced_df)} examples")
-        print("\n📊 Dataset Distribution AFTER balancing:")
+        print(f"\n Balanced Dataset: {len(balanced_df)} examples")
+        print("\n Dataset Distribution AFTER balancing:")
         print(balanced_df['label'].value_counts())
         
         return balanced_df
@@ -291,7 +288,7 @@ class MentalHealthDatasetBuilder:
             temp_df, test_size=0.5, random_state=42, stratify=temp_df['label']
         )
         
-        print(f"\n📊 Data Splits:")
+        print(f"\n Data Splits:")
         print(f"   Train: {len(train_df)} examples")
         print(f"   Validation: {len(val_df)} examples")
         print(f"   Test: {len(test_df)} examples")
@@ -313,37 +310,37 @@ class MentalHealthDatasetBuilder:
         with open(f"{self.output_dir}/label_map.json", 'w') as f:
             json.dump(label_map, f, indent=2)
         
-        print(f"\n✅ Datasets saved!")
+        print(f"\n Datasets saved!")
     
     def build(self):
         """Build complete dataset"""
         
         print("\n" + "="*70)
-        print("🏗️  Building ENHANCED Mental Health Dataset")
+        print("  Building ENHANCED Mental Health Dataset")
         print("="*70 + "\n")
         
         # Create large synthetic dataset
-        print("📝 Creating large synthetic dataset...")
+        print(" Creating large synthetic dataset...")
         synthetic_data = self.create_large_synthetic_dataset()
         
         # Augment with emojis
-        print("\n🔄 Augmenting with emojis...")
+        print("\n Augmenting with emojis...")
         augmented_data = self.augment_with_emojis(synthetic_data)
         
         # Balance
-        print("\n⚖️  Balancing dataset...")
+        print("\n  Balancing dataset...")
         balanced_df = self.create_balanced_dataset(augmented_data)
         
         # Split
-        print("\n✂️  Splitting dataset...")
+        print("\n  Splitting dataset...")
         train_df, val_df, test_df = self.split_dataset(balanced_df)
         
         # Save
-        print("\n💾 Saving datasets...")
+        print("\n Saving datasets...")
         self.save_datasets(train_df, val_df, test_df)
         
         print("\n" + "="*70)
-        print("✅ Enhanced Dataset Ready!")
+        print(" Enhanced Dataset Ready!")
         print("="*70 + "\n")
         
         return train_df, val_df, test_df
@@ -352,5 +349,5 @@ if __name__ == "__main__":
     builder = MentalHealthDatasetBuilder()
     train_df, val_df, test_df = builder.build()
     
-    print("\n📋 Sample Data:")
+    print("\n Sample Data:")
     print(train_df.sample(10))

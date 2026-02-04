@@ -25,8 +25,6 @@ class EmotionDetector:
         """
         Initialize the emotion detector with fine-tuned model.
         
-        Args:
-            model_path: Path to fine-tuned model directory
         """
         print(f"Loading fine-tuned emotion detection model...")
         
@@ -64,12 +62,7 @@ class EmotionDetector:
         """
         Detect emotion from text with emoji context.
         
-        Args:
-            text: Input text (can be code-mixed Sinhala-English)
-            emoji_context: Dictionary with emoji counts
-            
-        Returns:
-            Dictionary with emotion prediction and details
+        returns Dictionary with emotion prediction and details
         """
         
         # Tokenize
