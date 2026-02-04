@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ChatInterface from './components/Chat/ChatInterface';
 import CrisisResources from './components/Resources/CrisisResources';
 import MoodTracker from './components/MoodTracker/MoodTracker';
+import Login from './components/Login';
 import { apiService } from './services/apiService';
 import './App.css';
 
@@ -16,6 +17,7 @@ const getSessionId = () => {
 };
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showResources, setShowResources] = useState(false);
   const [activeView, setActiveView] = useState<'chat' | 'mood'>('chat');
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
@@ -33,6 +35,14 @@ function App() {
       setBackendStatus('offline');
     }
   };
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+  };
+
+  if (!isLoggedIn) {
+    return <Login onLogin={handleLogin} />;
+  }
 
   if (backendStatus === 'checking') {
     return (
