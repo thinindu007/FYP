@@ -1,5 +1,6 @@
 const axios = require('axios');
 const config = require('../config/config');
+const Mood = require('../models/Mood');
 
 class MLService {
   constructor() {
@@ -72,12 +73,44 @@ class MLService {
    * @param {string} language - Language preference
    * @returns {Promise<Object>} Generated response
    */
-  async generateResponse(text, language = 'mixed') {
+  // async generateResponse(text, language = 'mixed') {
+  //   try {
+  //     // Step 1: Detect emotion
+  //     const emotionResult = await this.detectEmotion(text, language);
+      
+  //     // Step 2: Generate appropriate response based on emotion
+  //     const response = this.selectResponse(
+  //       emotionResult.emotion,
+  //       emotionResult.mixedFeeling,
+  //       language
+  //     );
+
+  //     return {
+  //       success: true,
+  //       response,
+  //       emotion: {
+  //         label: emotionResult.emotion,
+  //         confidence: emotionResult.confidence,
+  //         mixedFeeling: emotionResult.mixedFeeling,
+  //       },
+  //       language,
+  //       processingTime: emotionResult.processingTime,
+  //     };
+  //   } catch (error) {
+  //     console.error('Response generation failed:', error.message);
+  //     return this.fallbackResponse(language);
+  //   }
+  // }
+  async generateResponse(text, language = 'mixed', sessionId) {
     try {
-      // Step 1: Detect emotion
       const emotionResult = await this.detectEmotion(text, language);
       
-      // Step 2: Generate appropriate response based on emotion
+      // REAL-TIME SAVING: Persist the interaction result
+      // This allows the Mood Tracker to see emotions detected in Chat
+      if (sessionId) {
+        await this.logChatEmotion(sessionId, emotionResult.emotion);
+      }
+
       const response = this.selectResponse(
         emotionResult.emotion,
         emotionResult.mixedFeeling,
@@ -90,7 +123,6 @@ class MLService {
         emotion: {
           label: emotionResult.emotion,
           confidence: emotionResult.confidence,
-          mixedFeeling: emotionResult.mixedFeeling,
         },
         language,
         processingTime: emotionResult.processingTime,
@@ -98,6 +130,19 @@ class MLService {
     } catch (error) {
       console.error('Response generation failed:', error.message);
       return this.fallbackResponse(language);
+    }
+  }
+
+  async logChatEmotion(sessionId, emotion) {
+    try {
+      await Mood.create({
+        sessionId,
+        mood: 3, // Default "neutral" score for chat-only logs
+        note: `Auto-detected from chat: ${emotion}`,
+        detectedEmotion: emotion,
+      });
+    } catch (err) {
+      console.error('Failed to log emotion to DB:', err.message);
     }
   }
 
