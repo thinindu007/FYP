@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiService } from '../services/apiService';
 import './Login.css';
 
 interface LoginProps {
@@ -6,32 +7,40 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
+  const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    //validation
-    if (!email || !password) {
-      setError('Please fill in all fields');
-      return;
-    }
-    
-    if (!email.includes('@')) {
-      setError('Please enter a valid email');
-      return;
-    }
-    
+    setLoading(true);
+    setError('');
+
+    // Basic Validation
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
+      setLoading(false);
       return;
     }
-    
-    
-    setError('');
-    onLogin();
+
+    try {
+      let response;
+      if (isRegistering) {
+        response = await apiService.register({ email, password });
+      } else {
+        response = await apiService.login({ email, password });
+      }
+
+      if (response.success) {
+        onLogin(); // Signal to App.tsx that we are in!
+      }
+    } catch (err: any) {
+      setError(err.error?.message || err.message || 'Authentication failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -39,49 +48,48 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <div className="login-card">
         <div className="login-header">
           <h1 className="login-title">🌱 WellAdapt</h1>
-          <p className="login-subtitle">Your Bilingual Mental Wellness Companion</p>
+          <p className="login-subtitle">
+            {isRegistering ? 'Create your student account' : 'Welcome back, Student'}
+          </p>
         </div>
-        
+
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email" className="form-label">Email</label>
+            <label className="form-label">University Email</label>
             <input
               type="email"
-              id="email"
               className="form-input"
-              placeholder="Enter your email"
+              placeholder="e.g. name@student.lk"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
-          
+
           <div className="form-group">
-            <label htmlFor="password" className="form-label">Password</label>
+            <label className="form-label">Password</label>
             <input
               type="password"
-              id="password"
               className="form-input"
-              placeholder="Enter your password"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
-          
-          {error && (
-            <div className="error-message">
-              {error}
-            </div>
-          )}
-          
-          <button type="submit" className="login-button">
-            Login
+
+          {error && <div className="error-message">{error}</div>}
+
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? 'Processing...' : isRegistering ? 'Register' : 'Login'}
           </button>
         </form>
-        
+
         <div className="login-footer">
-          <p>use email and passowrd to log in, password (min 6 chars)</p>
+          <p onClick={() => setIsRegistering(!isRegistering)} style={{ cursor: 'pointer', color: '#6366f1' }}>
+            {isRegistering ? 'Already have an account? Login' : 'New student? Register here'}
+          </p>
+          <p className="privacy-note">Your data is encrypted and private.</p>
         </div>
       </div>
     </div>

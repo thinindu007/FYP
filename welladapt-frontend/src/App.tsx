@@ -17,7 +17,9 @@ const getSessionId = () => {
 };
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    !!localStorage.getItem('welladapt-token')
+  );
   const [showResources, setShowResources] = useState(false);
   const [activeView, setActiveView] = useState<'chat' | 'mood'>('chat');
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
@@ -38,6 +40,13 @@ function App() {
 
   const handleLogin = () => {
     setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    apiService.logout();
+    setIsLoggedIn(false);
+    setActiveView('chat');
+    setShowResources(false);
   };
 
   if (!isLoggedIn) {
@@ -81,13 +90,20 @@ function App() {
         >
           Mood
         </button>
+
+        {/* Logout Button */}
+        <button className="nav-button logout-btn" onClick={handleLogout}>
+          🚫
+        </button>
       </div>
 
       {/* Main Content */}
       {activeView === 'chat' ? (
         <ChatInterface onShowResources={() => setShowResources(true)} />
       ) : (
-        <MoodTracker sessionId={sessionId} />
+        <MoodTracker
+          sessionId={localStorage.getItem('welladapt-session-id') || sessionId}
+        />
       )}
       
       {showResources && (

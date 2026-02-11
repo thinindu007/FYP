@@ -154,3 +154,17 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
 }
+
+/* Logout button styling */
+.logout-btn {
+  color: #ef4444 !important;
+  font-weight: 600;
+  border-left: 1px solid #e2e8f0;
+  margin-left: auto;
+  flex: 0;
+  padding: 10px 16px;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.05) !important;
+}
