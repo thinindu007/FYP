@@ -5,6 +5,7 @@ FastAPI server for emotion detection in bilingual mental health chat
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 import uvicorn
 import torch
 
@@ -13,32 +14,11 @@ from app.models.emotion_detector import EmotionDetector
 from app.utils.text_processor import TextProcessor
 from app.routes import ml_endpoints
 
-# Create FastAPI app
-app = FastAPI(
-    title="WellAdapt ML Server",
-    description="Emotion detection API for bilingual mental health support",
-    version="1.0.0",
-    docs_url="/docs",  # Swagger UI at http://localhost:8000/docs
-    redoc_url="/redoc"  # ReDoc at http://localhost:8000/redoc
-)
-
-# Enable CORS (so Node.js backend can call this server)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5000",  # Node.js backend
-        "http://localhost:3000",  # React frontend (for testing)
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     """
-    Load ML models when server starts.
-    This happens once, not on every request.
+    Lifespan context manager for handling startup and shutdown.
+    This replaces the deprecated @app.on_event("startup") logic.
     """
     print("\n" + "="*50)
     print(" WellAdapt ML Server Starting...")
@@ -65,32 +45,41 @@ async def startup_event():
     print(" ML Server Ready!")
     print(" API Docs: http://localhost:8000/docs")
     print("="*50 + "\n")
+    
+    yield  # Server runs here
+    
+    # Shutdown logic can go here if needed
+    print("Shutting down ML Server...")
+
+# Create FastAPI app with lifespan handler
+app = FastAPI(
+    title="WellAdapt ML Server",
+    description="Emotion detection API for bilingual mental health support",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    lifespan=lifespan
+)
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5000", "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 async def root():
-    """Root endpoint - basic info"""
     return {
         "service": "WellAdapt ML Server",
         "status": "running",
-        "version": "1.0.0",
-        "endpoints": {
-            "detect_emotion": "/ml/detect-emotion",
-            "batch_detect": "/ml/batch-detect-emotion",
-            "health": "/ml/health",
-            "model_info": "/ml/model-info",
-            "docs": "/docs"
-        }
+        "version": "1.0.0"
     }
 
 # Include ML routes
 app.include_router(ml_endpoints.router, prefix="/ml", tags=["Machine Learning"])
 
 if __name__ == "__main__":
-    # Run the server
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",  
-        port=8000,
-        reload=True,      
-        log_level="info"
-    )
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")

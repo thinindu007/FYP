@@ -1,18 +1,17 @@
 """
-Emotion Detector
+Emotion Detector - WellAdapt
 """
 
 import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+# Explicitly import the specific classes to avoid config/tokenizer factory errors
+from transformers import AutoModelForSequenceClassification, XLMRobertaTokenizer, XLMRobertaForSequenceClassification
 from typing import Dict, List
 import json
 import os
 
 class EmotionDetector:
     """
-    fine-tuned XLM-RoBERTa modal.
-    
-    model for:
+    Fine-tuned XLM-RoBERTa model wrapper for:
     - Mental health conversations
     - Bilingual Sinhala-English code-mixed text
     - Academic stress contexts
@@ -22,10 +21,10 @@ class EmotionDetector:
     
     def __init__(self, model_path: str = "training/models/final_model"):
         """
-        Initialize the emotion detector with fine-tuned model.
-        
+        Initialize the emotion detector.
+        Uses specific XLMRoberta classes to bypass missing config.json errors.
         """
-        print(f"Loading fine-tuned emotion detection model...")
+        print(f"Loading emotion detection model...")
         
         # Check if fine-tuned model exists
         if not os.path.exists(model_path):
@@ -33,13 +32,17 @@ class EmotionDetector:
             print(f"Using base model instead. Run training first for better results!")
             model_path = "xlm-roberta-base"
             self.is_finetuned = False
+            # If using base, we can use Auto classes, but for consistency we stick to specific ones
+            self.tokenizer = XLMRobertaTokenizer.from_pretrained(model_path)
+            self.model = XLMRobertaForSequenceClassification.from_pretrained(model_path, num_labels=5)
         else:
             print(f"Loading fine-tuned model from {model_path}")
             self.is_finetuned = True
-        
-        # Load tokenizer and model
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
+            
+            # THE FIX: Directly use the specific XLMRoberta classes. 
+            # This ignores the 'model_type' check in the config factory.
+            self.tokenizer = XLMRobertaTokenizer.from_pretrained(model_path)
+            self.model = XLMRobertaForSequenceClassification.from_pretrained(model_path)
         
         # Set to evaluation mode
         self.model.eval()
@@ -47,11 +50,15 @@ class EmotionDetector:
         # Load metadata if available
         metadata_path = "training/models/model_metadata.json"
         if os.path.exists(metadata_path):
-            with open(metadata_path, 'r') as f:
-                self.metadata = json.load(f)
-            print(f" Model F1 Score: {self.metadata['test_metrics']['f1']:.4f}")
+            try:
+                with open(metadata_path, 'r') as f:
+                    self.metadata = json.load(f)
+                if 'test_metrics' in self.metadata:
+                    print(f" Model F1 Score: {self.metadata['test_metrics']['f1']:.4f}")
+            except Exception as e:
+                print(f"Could not load metadata: {e}")
         
-        # Emotion labels (from fine-tuning)
+        # Emotion labels (must match the training label_map order)
         self.emotion_labels = ['stress', 'anxiety', 'depression', 'neutral', 'positive']
         
         print("Emotion detector ready!")
@@ -60,11 +67,8 @@ class EmotionDetector:
     def detect_emotion(self, text: str, emoji_context: Dict = None) -> Dict:
         """
         Detect emotion from text with emoji context.
-        
-        returns Dictionary with emotion prediction and details
         """
-        
-        # Tokenize
+        # Tokenize using the XLMRoberta specific tokenizer
         inputs = self.tokenizer(
             text,
             padding=True,
@@ -90,14 +94,13 @@ class EmotionDetector:
         text_emotion = self.emotion_labels[text_emotion_idx]
         text_confidence = float(probabilities[text_emotion_idx])
         
-        # Check for emoji-text conflict
+        # Emoji-text conflict detection
         mixed_feeling = False
         emoji_emotion = None
         
         if emoji_context and any(emoji_context.values()):
             emoji_emotion = max(emoji_context, key=emoji_context.get)
             
-            # Conflict detection
             conflict_pairs = [
                 ('positive', 'sad'),
                 ('positive', 'anxious'),
@@ -109,53 +112,26 @@ class EmotionDetector:
                     mixed_feeling = True
                     break
         
-        # Build result
-        result = {
+        return {
             'emotion': text_emotion,
             'confidence': round(text_confidence, 3),
-            'all_emotions': {
-                label: round(prob, 3) 
-                for label, prob in probs_dict.items()
-            },
+            'all_emotions': {label: round(prob, 3) for label, prob in probs_dict.items()},
             'mixed_feeling': mixed_feeling,
             'emoji_emotion': emoji_emotion if mixed_feeling else None,
-            'explanation': self._generate_explanation(
-                text_emotion, 
-                text_confidence, 
-                mixed_feeling, 
-                emoji_emotion
-            ),
+            'explanation': self._generate_explanation(text_emotion, text_confidence, mixed_feeling, emoji_emotion),
             'model_version': 'fine-tuned' if self.is_finetuned else 'base'
         }
-        
-        return result
     
-    def _generate_explanation(
-        self, 
-        emotion: str, 
-        confidence: float, 
-        mixed: bool, 
-        emoji_emotion: str
-    ) -> str:
-        """Generate explanation of emotion detection"""
-        
+    def _generate_explanation(self, emotion: str, confidence: float, mixed: bool, emoji_emotion: str) -> str:
         if mixed:
-            return (
-                f"Detected mixed feelings: text suggests '{emotion}' "
-                f"but emojis suggest '{emoji_emotion}'. "
-                f"This might indicate complex emotions."
-            )
+            return f"Mixed signals: text suggests '{emotion}' but emojis hint at '{emoji_emotion}'."
         
         if confidence > 0.8:
-            return f"Strong {emotion} detected with high confidence."
+            return f"Strong {emotion} detected."
         elif confidence > 0.6:
             return f"Moderate {emotion} detected."
         else:
-            return f"Weak {emotion} signal. Emotion is unclear."
-    
+            return f"Emotion detected as {emotion}, but signal is weak."
+
     def batch_detect(self, texts: List[str]) -> List[Dict]:
-        """Batch emotion detection"""
-        results = []
-        for text in texts:
-            results.append(self.detect_emotion(text))
-        return results
+        return [self.detect_emotion(text) for text in texts]
